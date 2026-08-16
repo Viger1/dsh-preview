@@ -91,6 +91,15 @@ dsh plugin --profile web add /absolute/path/to/dsh-preview   # link the local ch
 
 `corepack pnpm run watch` + a config touch gives a fast edit-reload loop.
 
+## Family
+
+| Plugin | What it gives your agent |
+| --- | --- |
+| **dsh-preview** (this repo) | 👁 Eyes — verify what it builds: open, read, screenshot, self-check |
+| [dsh-pilot](https://github.com/Viger1/dsh-pilot) | ✋ Hands — operate any page by accessibility refs, with a network-layer origin fence |
+
+Both install independently and coexist (different tool prefixes, shared engineering discipline).
+
 ## License
 
 [MIT](LICENSE)

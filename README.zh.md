@@ -91,6 +91,15 @@ dsh plugin --profile web add /absolute/path/to/dsh-preview   # 链接本地目�
 
 `corepack pnpm run watch` 加一次配置 touch 即可快速编辑-重载。
 
+## 同系插件
+
+| 插件 | 给 agent 的能力 |
+| --- | --- |
+| **dsh-preview**（本仓库） | 👁 眼睛——验证自己写的页面：打开、读取、截图、自检 |
+| [dsh-pilot](https://github.com/Viger1/dsh-pilot) | ✋ 手——按无障碍 ref 操作任意页面，带网络层域名围栏 |
+
+两者独立安装、可共存（工具前缀不同，工程规范一致）。
+
 ## 协议
 
 [MIT](LICENSE)
