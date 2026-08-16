@@ -8,6 +8,10 @@ Your dsh agent can write a whole web app, but it has never seen one. It ships CS
 
 ## What it looks like
 
+![The voxel world the agent verified](docs/demo-voxel.png)
+
+*Screenshot taken by the agent itself, mid-verification.*
+
 A real, unedited run: a dsh agent (DeepSeek-V4-Pro) was asked to verify a Three.js voxel game it had built earlier. With `dsh-preview` installed it did all of this autonomously:
 
 1. `browser_open http://localhost:8091` — page loaded, no console errors during load.

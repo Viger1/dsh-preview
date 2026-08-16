@@ -8,6 +8,10 @@ dsh agent 能写出一整个 Web 应用，却从没"见过"它：改完 CSS 无�
 
 ## 实际效果
 
+![agent 验证中的体素世界](docs/demo-voxel.png)
+
+*这张截图是 agent 在验证过程中自己拍的。*
+
 一次真实、未剪辑的运行：让 dsh agent（DeepSeek-V4-Pro）验证它之前写的 Three.js 体素游戏。装上 `dsh-preview` 后，它全自主完成了：
 
 1. `browser_open http://localhost:8091` —— 页面加载成功，加载期零控制台错误。
