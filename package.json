@@ -11,6 +11,15 @@
     "skills"
   ],
   "license": "MIT",
+  "author": "Viger1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Viger1/dsh-preview.git"
+  },
+  "homepage": "https://github.com/Viger1/dsh-preview#readme",
+  "bugs": {
+    "url": "https://github.com/Viger1/dsh-preview/issues"
+  },
   "keywords": [
     "dsh-plugin",
     "deepseek-harness",

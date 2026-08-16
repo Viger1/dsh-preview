@@ -83,7 +83,7 @@ All tunables are plugin config — set them in your profile's `cordis.patch.yml`
 ## Development
 
 ```sh
-git clone <this repo> && cd dsh-preview
+git clone https://github.com/Viger1/dsh-preview.git && cd dsh-preview
 corepack pnpm install
 corepack pnpm run build
 dsh plugin --profile web add /absolute/path/to/dsh-preview   # link the local checkout
