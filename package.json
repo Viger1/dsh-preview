@@ -42,7 +42,8 @@
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -p tsconfig.json --watch",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest run"
   },
   "dependencies": {
     "@deepseek-ai/dsh-skill": "^0.1.0-rc.5",
@@ -56,6 +57,7 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.0-rc.7",
     "@types/node": "^26.2.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.10"
   }
 }

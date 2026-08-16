@@ -12,29 +12,8 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
-import { extname, join, normalize, resolve, sep } from 'node:path'
-
-const CONTENT_TYPES: Record<string, string> = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.ico': 'image/x-icon',
-  '.txt': 'text/plain; charset=utf-8',
-  '.md': 'text/plain; charset=utf-8',
-  '.wasm': 'application/wasm',
-  '.mp4': 'video/mp4',
-  '.mp3': 'audio/mpeg',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-}
+import { join, resolve } from 'node:path'
+import { contentTypeFor, needsDirectoryRedirect, resolveRequest } from './paths.js'
 
 /** One bound server. */
 interface Entry {
@@ -107,34 +86,29 @@ export class StaticServers {
  * @param res - response to write.
  */
 async function handle(root: string, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const rawUrl = (req.url ?? '/').split('?')[0]
-  let rawPath: string
-  try {
-    rawPath = decodeURIComponent(rawUrl)
-  } catch {
+  const resolution = resolveRequest(root, req.url ?? '/')
+  if (resolution.kind === 'bad-request') {
     res.writeHead(400).end('bad request')
     return
   }
-  const filePath = normalize(join(root, rawPath))
-  const prefix = root.endsWith(sep) ? root : root + sep
-  if (filePath !== root && !filePath.startsWith(prefix)) {
+  if (resolution.kind === 'forbidden') {
     res.writeHead(403).end('forbidden')
     return
   }
   try {
-    let target = filePath
+    let target = resolution.path
     let info = await stat(target)
     if (info.isDirectory()) {
       // Relative sub-resources only resolve under a trailing-slash URL.
-      if (!rawPath.endsWith('/')) {
-        res.writeHead(301, { location: encodeURI(rawPath) + '/' }).end()
+      if (needsDirectoryRedirect(resolution.decodedPath)) {
+        res.writeHead(301, { location: encodeURI(resolution.decodedPath) + '/' }).end()
         return
       }
       target = join(target, 'index.html')
       info = await stat(target)
     }
     res.writeHead(200, {
-      'content-type': CONTENT_TYPES[extname(target).toLowerCase()] ?? 'application/octet-stream',
+      'content-type': contentTypeFor(target),
       'content-length': info.size,
       'cache-control': 'no-store',
     })
