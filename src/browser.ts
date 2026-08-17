@@ -81,10 +81,47 @@ export class BrowserManager {
   async open(url: string, timeoutMs: number, signal: AbortSignal): Promise<TrackedPage> {
     this.throwIfDisposed()
     throwIfAborted(signal)
+    // Registered before the launch, not after the page exists: an abort fires
+    // once, so a listener attached later never runs and the browser would keep
+    // loading for the full navigation timeout. The handler closes whatever
+    // page exists when the abort arrives.
+    let opened: Page | undefined
+    const closeOnAbort = (): void => {
+      void opened?.close().catch(() => { /* already closed; abort still wins the race below */ })
+    }
+    signal.addEventListener('abort', closeOnAbort, { once: true })
+    try {
+      return await this.openTracked(url, timeoutMs, signal, (page) => { opened = page })
+    } finally {
+      signal.removeEventListener('abort', closeOnAbort)
+    }
+  }
+
+  /**
+   * Open and navigate one page, publishing it only after navigation succeeds.
+   * @param url - absolute http(s) URL to navigate to.
+   * @param timeoutMs - per-attempt navigation timeout in milliseconds.
+   * @param signal - cooperative cancellation from the tool execution.
+   * @param publish - receives the page as soon as it exists, so the caller's
+   *   abort handler can close it.
+   * @returns the tracked page.
+   */
+  private async openTracked(
+    url: string,
+    timeoutMs: number,
+    signal: AbortSignal,
+    publish: (page: Page) => void,
+  ): Promise<TrackedPage> {
     const context = await this.ensureContext()
     this.throwIfDisposed()
     throwIfAborted(signal)
     const page = await context.newPage()
+    publish(page)
+    if (signal.aborted) {
+      await page.close().catch(() => { /* the abort handler may have closed it already */ })
+      throw new Error('cancelled before the page was navigated')
+    }
+    this.throwIfDisposed()
     const id = `page-${++this.counter}`
     const tracked: TrackedPage = { id, page, console: [], failures: [], lastSeq: 0 }
     page.on('console', (msg) => this.capture(tracked, msg.type(), msg.text()))
@@ -93,10 +130,8 @@ export class BrowserManager {
       if (tracked.failures.length >= this.options.maxConsoleMessages) tracked.failures.shift()
       tracked.failures.push({ url: req.url(), reason: req.failure()?.errorText ?? 'unknown' })
     })
-    const closeOnAbort = (): void => {
-      void page.close().catch(() => { /* already closed; abort still wins the race below */ })
-    }
-    signal.addEventListener('abort', closeOnAbort, { once: true })
+    // The caller's abort handler already owns closing this page, so navigation
+    // needs no listener of its own.
     try {
       try {
         await page.goto(url, { timeout: timeoutMs, waitUntil: 'load' })
@@ -112,8 +147,6 @@ export class BrowserManager {
     } catch (err) {
       await page.close().catch(() => { /* already closed by abort or crash; nothing left to release */ })
       throw signal.aborted ? new Error('cancelled while loading the page') : err
-    } finally {
-      signal.removeEventListener('abort', closeOnAbort)
     }
     this.throwIfDisposed()
     this.pages.set(id, tracked)
