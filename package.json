@@ -1,6 +1,6 @@
 {
   "name": "dsh-preview",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Eyes for your DeepSeek Harness agent — it opens, sees, and fixes what it builds. Headless-browser preview & self-verification tools (screenshot, console, DOM read, interact) as a dsh plugin.",
   "type": "module",
   "main": "lib/index.js",
@@ -46,16 +46,19 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-skill": "^0.1.0-rc.5",
-    "@deepseek-ai/dsh-tools": "^0.1.0-rc.5",
-    "@deepseek-ai/schemastery": "^3.18.1",
     "playwright-core": "^1.49.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "*"
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-skill": "*",
+    "@deepseek-ai/dsh-tools": "*",
+    "@deepseek-ai/schemastery": "*"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.0-rc.7",
+    "@deepseek-ai/dsh-skill": "^0.1.0-rc.5",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.5",
+    "@deepseek-ai/schemastery": "^3.18.1",
     "@types/node": "^26.2.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.10"
