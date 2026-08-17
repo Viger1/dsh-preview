@@ -102,6 +102,7 @@ dsh plugin --profile web add /absolute/path/to/dsh-preview   # link the local ch
 | **dsh-preview** (this repo) | 👁 Eyes — verify what it builds: open, read, screenshot, self-check |
 | [dsh-pilot](https://github.com/Viger1/dsh-pilot) | ✋ Hands — operate any page by accessibility refs, with a network-layer origin fence |
 | [dsh-review](https://github.com/Viger1/dsh-review) | 🔍 Judgement — find defects, then try to refute each one before reporting it |
+| [dsh-design](https://github.com/Viger1/dsh-design) | 🎨 Taste — constrain the choices, then measure whether the result kept them |
 
 Each installs independently and they coexist (distinct tool prefixes, shared engineering discipline).
 
