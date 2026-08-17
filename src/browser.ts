@@ -7,6 +7,9 @@
 
 import type { Browser, BrowserContext, Page } from 'playwright-core'
 import { chromium } from 'playwright-core'
+import { throwIfAborted, withCancellation, type CancellationScope } from './cancellation.js'
+
+export { raceAbort, throwIfAborted, withCancellation } from './cancellation.js'
 
 /** One captured console message. */
 export interface ConsoleEntry {
@@ -85,16 +88,7 @@ export class BrowserManager {
     // once, so a listener attached later never runs and the browser would keep
     // loading for the full navigation timeout. The handler closes whatever
     // page exists when the abort arrives.
-    let opened: Page | undefined
-    const closeOnAbort = (): void => {
-      void opened?.close().catch(() => { /* already closed; abort still wins the race below */ })
-    }
-    signal.addEventListener('abort', closeOnAbort, { once: true })
-    try {
-      return await this.openTracked(url, timeoutMs, signal, (page) => { opened = page })
-    } finally {
-      signal.removeEventListener('abort', closeOnAbort)
-    }
+    return withCancellation(signal, scope => this.openTracked(url, timeoutMs, signal, scope))
   }
 
   /**
@@ -102,25 +96,22 @@ export class BrowserManager {
    * @param url - absolute http(s) URL to navigate to.
    * @param timeoutMs - per-attempt navigation timeout in milliseconds.
    * @param signal - cooperative cancellation from the tool execution.
-   * @param publish - receives the page as soon as it exists, so the caller's
-   *   abort handler can close it.
+   * @param scope - cancellation scope; the page is registered with it as soon
+   *   as it exists so an abort closes it.
    * @returns the tracked page.
    */
   private async openTracked(
     url: string,
     timeoutMs: number,
     signal: AbortSignal,
-    publish: (page: Page) => void,
+    scope: CancellationScope,
   ): Promise<TrackedPage> {
     const context = await this.ensureContext()
     this.throwIfDisposed()
-    throwIfAborted(signal)
+    scope.throwIfCancelled()
     const page = await context.newPage()
-    publish(page)
-    if (signal.aborted) {
-      await page.close().catch(() => { /* the abort handler may have closed it already */ })
-      throw new Error('cancelled before the page was navigated')
-    }
+    scope.closeOnAbort(page)
+    scope.throwIfCancelled()
     this.throwIfDisposed()
     const id = `page-${++this.counter}`
     const tracked: TrackedPage = { id, page, console: [], failures: [], lastSeq: 0 }
@@ -245,32 +236,4 @@ export class BrowserManager {
       viewport: { width: this.options.viewportWidth, height: this.options.viewportHeight },
     })
   }
-}
-
-/**
- * Throw the abort reason when the signal is already aborted.
- * @param signal - the tool execution's cancellation signal.
- */
-export function throwIfAborted(signal: AbortSignal): void {
-  if (signal.aborted) throw new Error('cancelled before the browser step started')
-}
-
-/**
- * Settle `work` or reject as soon as `signal` aborts, whichever happens first.
- * The underlying operation keeps its own playwright timeout as the hard bound;
- * this race is what lets a tool return promptly on cooperative cancellation.
- * @param signal - the tool execution's cancellation signal.
- * @param work - the in-flight browser operation.
- * @returns the settled value of `work`.
- */
-export function raceAbort<T>(signal: AbortSignal, work: Promise<T>): Promise<T> {
-  if (signal.aborted) return Promise.reject(new Error('cancelled before the browser step started'))
-  return new Promise<T>((resolve, reject) => {
-    const onAbort = (): void => reject(new Error('cancelled by tool signal'))
-    signal.addEventListener('abort', onAbort, { once: true })
-    work.then(
-      (value) => { signal.removeEventListener('abort', onAbort); resolve(value) },
-      (err: unknown) => { signal.removeEventListener('abort', onAbort); reject(err instanceof Error ? err : new Error(String(err))) },
-    )
-  })
 }
