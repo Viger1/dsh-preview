@@ -2,9 +2,11 @@
 
 English | [中文](README.zh.md)
 
-**Eyes for your DeepSeek Harness agent — it opens, sees, and fixes what it builds.**
+**A verification loop the agent runs on itself, not just browser tools.**
 
-Your dsh agent can write a whole web app, but it has never seen one. It ships CSS it cannot look at, "verifies" pages by re-reading source code, and asks *you* to open the browser and describe what went wrong. `dsh-preview` closes that loop: six headless-browser tools plus a bundled verification skill, so the agent opens the page it just built, checks the console, reads the rendered DOM, exercises the UI, and hands you a screenshot — before it claims the work is done.
+Reading a page without a vision model is ordinary now — several plugins here do it, and do it well. What this ships is the **discipline around it**: a bundled `frontend-verify` skill that makes the agent open what it just built, check the console, assert layout facts from computed styles, exercise the UI, fix what it finds, and re-verify — before claiming the work is done. The six tools exist to serve that loop.
+
+The distinction matters because the failure this addresses is not "the agent cannot see the page". It is that the agent never thinks to look, reports work as finished from re-reading its own source, and leaves *you* to open the browser and describe what broke.
 
 ## What it looks like
 
@@ -46,9 +48,11 @@ Requires Node `^22.19 || >=24` (same as dsh itself).
 
 `browser_read` is the heart of the design: a text-only model verifies layout facts (box sizes, colors, display values, rendered copy) *deterministically*, instead of hallucinating over pixels. Screenshots are for the human in the loop.
 
-## The bundled skill
+## The bundled skill — the actual product
 
-The plugin ships a `frontend-verify` skill that teaches the agent the discipline: **open → console → read → interact → screenshot → fix → re-verify**, report what passed verbatim, and name what could not be verified instead of implying full coverage. Disable it with `registerSkill: false` if you run your own playbook.
+`frontend-verify` teaches the loop: **open → console → read → interact → screenshot → fix → re-verify**, report what passed verbatim, and name what could **not** be verified rather than implying full coverage. That last rule is why the demo above ends with the agent volunteering that it could not judge GPU rendering or pointer-lock feel.
+
+Disable it with `registerSkill: false` if you run your own playbook — but then you have bought browser tools, of which this ecosystem has many.
 
 ## Configuration
 
